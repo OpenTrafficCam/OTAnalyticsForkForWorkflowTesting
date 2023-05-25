@@ -8,6 +8,9 @@ from OTAnalytics.plugin_ui.customtkinter_gui.frame_configuration import (
     FrameConfiguration,
 )
 from OTAnalytics.plugin_ui.customtkinter_gui.frame_tracks import TracksFrame
+from OTAnalytics.plugin_ui.customtkinter_gui.frame_traffic_counting import (
+    FrameTrafficCounting,
+)
 
 
 class OTAnalyticsGui:
@@ -47,14 +50,20 @@ class OTAnalyticsGui:
         self.frame_analysis = FrameAnalysis(
             master=self._app, viewmodel=self._view_model
         )
+        self._frame_traffic_counting = FrameTrafficCounting(
+            master=self._app, viewmodel=self._view_model
+        )
 
     def _place_widgets(self) -> None:
         PADY = 10
         self.frame_canvas.grid(
-            row=0, column=0, rowspan=3, padx=PADX, pady=PADY, sticky=STICKY
+            row=0, column=0, rowspan=2, padx=PADX, pady=PADY, sticky=STICKY
         )
         self.frame_tracks.grid(row=0, column=1, padx=PADX, pady=PADY, sticky=STICKY)
         self.tabview_configuration.grid(
             row=1, column=1, padx=PADX, pady=PADY, sticky=STICKY
+        )
+        self._frame_traffic_counting.grid(
+            row=2, column=0, padx=PADX, pady=PADY, sticky=STICKY
         )
         self.frame_analysis.grid(row=2, column=1, padx=PADX, pady=PADY, sticky=STICKY)

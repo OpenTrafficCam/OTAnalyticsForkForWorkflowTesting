@@ -174,3 +174,11 @@ class ViewModel(ABC):
     @abstractmethod
     def disable_filter_track_by_date(self) -> None:
         pass
+
+    @abstractmethod
+    def start_counting(self) -> None:
+        pass
+
+    @abstractmethod
+    def save_counts(self, file: str) -> None:
+        pass

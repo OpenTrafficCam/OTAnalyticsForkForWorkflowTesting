@@ -549,3 +549,9 @@ class DummyViewModel(ViewModel, SectionListObserver, FlowListObserver):
             raise MissingInjectedInstanceError(AbstractFrameFilter.__name__)
 
         self._frame_filter.disable_filter_by_date_button()
+
+    def start_counting(self) -> None:
+        self._application.start_counting()
+
+    def save_counts(self, file: str) -> None:
+        self._application.save_counts(Path(file))

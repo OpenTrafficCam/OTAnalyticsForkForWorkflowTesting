@@ -271,3 +271,13 @@ class OTAnalyticsApplication:
         self.track_view_state.filter_element.set(
             FilterElement(DateRange(None, None), current_filter_element.classifications)
         )
+
+    def start_counting(self) -> None:
+        # counts = self._traffic_counter.count()
+        # TODO store counts somewhere
+        print("Not yet implemented!")
+
+    def save_counts(self, file: Path) -> None:
+        # TODO get counts from somewhere
+        # TODO serialize counts as json
+        print("Not yet implemented!")
