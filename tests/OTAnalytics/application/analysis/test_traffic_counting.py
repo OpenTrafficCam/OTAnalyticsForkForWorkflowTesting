@@ -20,6 +20,20 @@ from OTAnalytics.domain.track import TrackId
 from OTAnalytics.domain.types import EventType
 
 
+class TestSimpleCount:
+    def test_to_dict(self) -> None:
+        flow_id = "some flow"
+        vehicles = 1
+        result = {FlowId(flow_id): vehicles}
+        count = SimpleCount(result)
+
+        serialized = count.to_dict()
+
+        expected = {flow_id: vehicles}
+
+        assert serialized == expected
+
+
 def create_event(
     track_id: TrackId,
     section: SectionId,

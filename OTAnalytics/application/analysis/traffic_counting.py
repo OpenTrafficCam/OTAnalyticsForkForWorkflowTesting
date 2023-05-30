@@ -20,7 +20,7 @@ class SimpleCount(Count):
     result: dict[FlowId, int]
 
     def to_dict(self) -> dict:
-        return self.result
+        return {flow.id: count for flow, count in self.result.items()}
 
 
 @dataclass(frozen=True)
