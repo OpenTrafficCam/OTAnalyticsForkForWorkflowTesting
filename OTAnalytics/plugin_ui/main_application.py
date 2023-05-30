@@ -5,6 +5,7 @@ from OTAnalytics.application.analysis.intersect import (
     RunIntersect,
     RunSceneEventDetection,
 )
+from OTAnalytics.application.analysis.traffic_counting import SimpleCounter
 from OTAnalytics.application.application import OTAnalyticsApplication
 from OTAnalytics.application.datastore import (
     Datastore,
@@ -37,6 +38,7 @@ from OTAnalytics.plugin_intersect_parallelization.multiprocessing import (
     MultiprocessingIntersectParallelization,
 )
 from OTAnalytics.plugin_parser.otvision_parser import (
+    OtCountSerializer,
     OtEventListParser,
     OtsectionParser,
     OttrkParser,
@@ -94,6 +96,8 @@ class ApplicationStarter:
             self._create_filter_element_setting_restorer()
         )
 
+        traffic_counter = SimpleCounter()
+
         application = OTAnalyticsApplication(
             datastore=datastore,
             track_state=track_state,
@@ -103,6 +107,7 @@ class ApplicationStarter:
             scene_event_detection=scene_event_detection,
             tracks_metadata=tracks_metadata,
             filter_element_setting_restorer=filter_element_settings_restorer,
+            traffic_counter=traffic_counter,
         )
         section_parser: SectionParser = application._datastore._section_parser
         dummy_viewmodel = DummyViewModel(application, section_parser)
@@ -137,6 +142,7 @@ class ApplicationStarter:
         flow_repository = self._create_flow_repository()
         event_list_parser = self._create_event_list_parser()
         video_parser = OttrkVideoParser(MoviepyVideoReader())
+        count_serializer = OtCountSerializer()
         return Datastore(
             track_repository,
             track_parser,
@@ -145,6 +151,7 @@ class ApplicationStarter:
             flow_repository,
             event_list_parser,
             video_parser,
+            count_serializer,
         )
 
     def _create_track_repository(self) -> TrackRepository:

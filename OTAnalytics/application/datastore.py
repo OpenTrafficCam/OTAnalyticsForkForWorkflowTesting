@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
+from OTAnalytics.application.analysis.traffic_counting import Count
 from OTAnalytics.domain.event import Event, EventRepository
 from OTAnalytics.domain.flow import Flow, FlowId, FlowListObserver, FlowRepository
 from OTAnalytics.domain.section import (
@@ -180,6 +181,16 @@ class NoSectionsToSave(Exception):
     pass
 
 
+class NoCountsToSave(Exception):
+    pass
+
+
+class CountSerializer(ABC):
+    @abstractmethod
+    def serialize(self, counts: Count, file: Path, format: str) -> None:
+        pass
+
+
 class Datastore:
     """
     Central element to hold data in the application.
@@ -194,6 +205,7 @@ class Datastore:
         flow_repository: FlowRepository,
         event_list_parser: EventListParser,
         video_parser: VideoParser,
+        count_serializer: CountSerializer,
     ) -> None:
         self._track_parser = track_parser
         self._section_parser = section_parser
@@ -204,6 +216,8 @@ class Datastore:
         self._flow_repository = flow_repository
         self._event_repository = EventRepository()
         self._video_repository = VideoRepository()
+        self._current_counts: Optional[Count] = None
+        self._count_serializer = count_serializer
 
     def register_tracks_observer(self, observer: TrackListObserver) -> None:
         """
@@ -399,3 +413,15 @@ class Datastore:
         if video := self._video_repository.get_video_for(track_id):
             return video.get_frame(0)
         return None
+
+    def update_current_counts(self, counts: Count) -> None:
+        self._current_counts = counts
+
+    def get_current_counts(self) -> Optional[Count]:
+        return self._current_counts
+
+    def save_current_counts(self, file: Path, format: str = "json") -> None:
+        if counts := self._current_counts:
+            self._count_serializer.serialize(counts, format=format, file=file)
+        else:
+            raise NoCountsToSave()

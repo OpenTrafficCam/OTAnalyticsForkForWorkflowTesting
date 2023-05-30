@@ -5,6 +5,7 @@ from OTAnalytics.application.analysis.intersect import (
     RunIntersect,
     RunSceneEventDetection,
 )
+from OTAnalytics.application.analysis.traffic_counting import TrafficCounter
 from OTAnalytics.application.datastore import Datastore
 from OTAnalytics.application.state import (
     SectionState,
@@ -41,6 +42,7 @@ class OTAnalyticsApplication:
         scene_event_detection: RunSceneEventDetection,
         tracks_metadata: TracksMetadata,
         filter_element_setting_restorer: FilterElementSettingRestorer,
+        traffic_counter: TrafficCounter,
     ) -> None:
         self._datastore: Datastore = datastore
         self.track_state: TrackState = track_state
@@ -50,6 +52,7 @@ class OTAnalyticsApplication:
         self._scene_event_detection = scene_event_detection
         self._tracks_metadata = tracks_metadata
         self._filter_element_setting_restorer = filter_element_setting_restorer
+        self._traffic_counter = traffic_counter
 
     def connect_observers(self) -> None:
         """
@@ -273,11 +276,10 @@ class OTAnalyticsApplication:
         )
 
     def start_counting(self) -> None:
-        # counts = self._traffic_counter.count()
-        # TODO store counts somewhere
-        print("Not yet implemented!")
+        events = self._datastore._event_repository.get_all()
+        flows = self.get_all_flows()
+        counts = self._traffic_counter.count(events=events, flows=flows)
+        self._datastore.update_current_counts(counts)
 
     def save_counts(self, file: Path) -> None:
-        # TODO get counts from somewhere
-        # TODO serialize counts as json
-        print("Not yet implemented!")
+        self._datastore.save_current_counts(file=file, format="json")

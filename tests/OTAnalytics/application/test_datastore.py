@@ -7,6 +7,7 @@ from numpy import array, int32
 from PIL import Image
 
 from OTAnalytics.application.datastore import (
+    CountSerializer,
     Datastore,
     EventListParser,
     SectionParser,
@@ -94,6 +95,11 @@ def event_list_parser() -> Mock:
     return Mock(spec=EventListParser)
 
 
+@pytest.fixture
+def count_serializer() -> Mock:
+    return Mock(spec=CountSerializer)
+
+
 class TestDatastore:
     def test_load_track_file(
         self,
@@ -104,6 +110,7 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         some_track = Mock()
         some_track_id = TrackId(1)
@@ -119,6 +126,7 @@ class TestDatastore:
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         some_file = Path("some.file.ottrk")
 
@@ -139,6 +147,7 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         some_track = Mock()
         some_track_id = TrackId(1)
@@ -161,6 +170,7 @@ class TestDatastore:
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         some_file = Path("some.file.ottrk")
         other_file = Path("other.file.ottrk")
@@ -186,6 +196,7 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         track_parser.parse.return_value = []
         video_parser.parse.return_value = []
@@ -197,6 +208,7 @@ class TestDatastore:
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         some_file = Mock()
 
@@ -223,6 +235,7 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         track_parser.parse.return_value = []
         video_parser.parse.return_value = []
@@ -234,6 +247,7 @@ class TestDatastore:
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         some_file = Mock()
 
@@ -250,6 +264,7 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         store = Datastore(
             track_repository=track_repository,
@@ -259,6 +274,7 @@ class TestDatastore:
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         section_id = SectionId("my section")
         plugin_data = {"some": "new_value"}
@@ -281,15 +297,17 @@ class TestDatastore:
         flow_repository: Mock,
         video_parser: Mock,
         event_list_parser: Mock,
+        count_serializer: Mock,
     ) -> None:
         store = Datastore(
-            track_repository=TrackRepository(),
+            track_repository=track_repository,
             track_parser=track_parser,
             section_repository=section_repository,
             section_parser=section_parser,
             flow_repository=flow_repository,
             event_list_parser=event_list_parser,
             video_parser=video_parser,
+            count_serializer=count_serializer,
         )
         section_id = SectionId("my section")
         new_plugin_data = {"other": "new_value"}

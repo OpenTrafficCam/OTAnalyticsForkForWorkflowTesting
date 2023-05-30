@@ -9,7 +9,9 @@ import ujson
 
 import OTAnalytics.plugin_parser.ottrk_dataformat as ottrk_format
 from OTAnalytics import version
+from OTAnalytics.application.analysis.traffic_counting import Count
 from OTAnalytics.application.datastore import (
+    CountSerializer,
     EventListParser,
     SectionParser,
     TrackParser,
@@ -708,3 +710,9 @@ class OtEventListParser(EventListParser):
             list[dict]: list containing raw information of sections
         """
         return [section.to_dict() for section in sections]
+
+
+class OtCountSerializer(CountSerializer):
+    def serialize(self, counts: Count, file: Path, format: str) -> None:
+        data = counts.to_dict()
+        _write_json(data, file)
