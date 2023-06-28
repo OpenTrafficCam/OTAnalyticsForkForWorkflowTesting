@@ -382,9 +382,10 @@ class TrackStartEndPointPlotter(MatplotlibPlotterImplementation):
         self._alpha = alpha
 
     def plot(self, axes: Axes) -> None:
-        data = self._data_provider.get_data()
-        if not data.empty:
-            self._plot_dataframe(data, axes)
+        pass
+        # data = self._data_provider.get_data()
+        # if not data.empty:
+        #     self._plot_dataframe(data, axes)
 
     def _plot_dataframe(self, track_df: DataFrame, axes: Axes) -> None:
         """
