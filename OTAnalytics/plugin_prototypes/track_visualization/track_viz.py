@@ -37,7 +37,7 @@ CLASS_TRUCK_TRAILER = "truck_with_trailer"
 CLASS_TRUCK_SEMITRAILER = "truck_with_semitrailer"
 CLASS_BICYCLIST = "bicyclist"
 CLASS_BICYCLIST_TRAILER = "bicyclist_with_trailer"
-CLASS_CARGOBIKE = "cargobike_driver"
+CLASS_CARGO_BIKE_DRIVER = "cargo_bike_driver"
 CLASS_SCOOTER = "scooter_driver"
 CLASS_DELVAN = "delivery_van"
 CLASS_DELVAN_TRAILER = "delivery_van_with_trailer"
@@ -45,6 +45,7 @@ CLASS_PRVAN = "private_van"
 CLASS_PRVAN_TRAILER = "private_van_with_trailer"
 CLASS_TRAIN = "train"
 CLASS_BUS = "bus"
+CLASS_OTHER = "other"
 
 COLOR_PALETTE: dict[str, str] = {
     CLASS_CAR: "blue",
@@ -56,7 +57,7 @@ COLOR_PALETTE: dict[str, str] = {
     CLASS_TRUCK_SEMITRAILER: "pink",
     CLASS_BICYCLIST: "lime",
     CLASS_BICYCLIST_TRAILER: "lime",
-    CLASS_CARGOBIKE: "green",
+    CLASS_CARGO_BIKE_DRIVER: "green",
     CLASS_SCOOTER: "white",
     CLASS_DELVAN: "yellow",
     CLASS_DELVAN_TRAILER: "yellow",
@@ -64,13 +65,14 @@ COLOR_PALETTE: dict[str, str] = {
     CLASS_PRVAN_TRAILER: "black",
     CLASS_TRAIN: "brown",
     CLASS_BUS: "beige",
+    CLASS_OTHER: "purple",
 }
 
 CLASS_ORDER = [
     CLASS_PEDESTRIAN,
     CLASS_BICYCLIST,
     CLASS_BICYCLIST_TRAILER,
-    CLASS_CARGOBIKE,
+    CLASS_CARGO_BIKE_DRIVER,
     CLASS_SCOOTER,
     CLASS_MOTORCYCLIST,
     CLASS_CAR,
@@ -84,6 +86,7 @@ CLASS_ORDER = [
     CLASS_TRUCK_SEMITRAILER,
     CLASS_BUS,
     CLASS_TRAIN,
+    CLASS_OTHER,
 ]
 
 
@@ -367,6 +370,7 @@ class TrackGeometryPlotter(MatplotlibPlotterImplementation):
             ax=axes,
             palette=COLOR_PALETTE,
             hue_order=CLASS_ORDER,
+            legend=False,
         )
 
 
