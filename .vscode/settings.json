@@ -20,3 +20,4 @@
     "python.linting.mypyEnabled": true,
     "jupyter.notebookFileRoot": "${workspaceFolder}"
 }
+

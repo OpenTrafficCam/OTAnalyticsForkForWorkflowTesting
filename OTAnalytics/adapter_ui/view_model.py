@@ -1,18 +1,38 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
+from datetime import datetime
+from typing import Callable, Iterable, Optional
 
 from OTAnalytics.adapter_ui.abstract_canvas import AbstractCanvas
 from OTAnalytics.adapter_ui.abstract_frame_canvas import AbstractFrameCanvas
+from OTAnalytics.adapter_ui.abstract_frame_filter import AbstractFrameFilter
+from OTAnalytics.adapter_ui.abstract_frame_flows import AbstractFrameFlows
+from OTAnalytics.adapter_ui.abstract_frame_project import AbstractFrameProject
+from OTAnalytics.adapter_ui.abstract_frame_sections import AbstractFrameSections
 from OTAnalytics.adapter_ui.abstract_frame_tracks import AbstractFrameTracks
+from OTAnalytics.adapter_ui.abstract_main_window import AbstractMainWindow
 from OTAnalytics.adapter_ui.abstract_treeview_interface import AbstractTreeviewInterface
+from OTAnalytics.domain.date import DateRange
+from OTAnalytics.domain.flow import Flow
 from OTAnalytics.domain.section import Section
+from OTAnalytics.domain.video import Video
 
 DISTANCES: str = "distances"
+
+
+MetadataProvider = Callable[[], dict]
+
+
+class MissingCoordinate(Exception):
+    pass
 
 
 class ViewModel(ABC):
     @abstractmethod
     def register_to_subjects(self) -> None:
+        pass
+
+    @abstractmethod
+    def set_window(self, window: AbstractMainWindow) -> None:
         pass
 
     @abstractmethod
@@ -28,19 +48,67 @@ class ViewModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def set_sections_frame(self, frame: AbstractFrameSections) -> None:
+        pass
+
+    @abstractmethod
     def set_treeview_flows(self, treeview: AbstractTreeviewInterface) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    def set_flows_frame(self, frame: AbstractFrameFlows) -> None:
+        pass
 
     @abstractmethod
     def set_tracks_canvas(self, tracks_canvas: AbstractFrameCanvas) -> None:
         pass
 
     @abstractmethod
-    def set_selected_section_id(self, id: Optional[str]) -> None:
+    def set_filter_frame(self, filter_frame: AbstractFrameFilter) -> None:
+        pass
+
+    @abstractmethod
+    def set_frame_project(self, project_frame: AbstractFrameProject) -> None:
+        pass
+
+    @abstractmethod
+    def update_project(self, name: str, start_date: datetime) -> None:
+        pass
+
+    @abstractmethod
+    def save_configuration(self) -> None:
+        pass
+
+    @abstractmethod
+    def load_configuration(self) -> None:
+        pass
+
+    @abstractmethod
+    def add_video(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def set_selected_flow_id(self, id: Optional[str]) -> None:
+    def remove_videos(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_treeview_videos(self, treeview: AbstractTreeviewInterface) -> None:
+        pass
+
+    @abstractmethod
+    def set_selected_videos(self, video: list[str]) -> None:
+        pass
+
+    @abstractmethod
+    def get_all_videos(self) -> list[Video]:
+        pass
+
+    @abstractmethod
+    def set_selected_section_ids(self, ids: list[str]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_selected_flow_ids(self, ids: list[str]) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -56,6 +124,10 @@ class ViewModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def cancel_action(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def add_section(self) -> None:
         raise NotImplementedError
 
@@ -64,7 +136,25 @@ class ViewModel(ABC):
         pass
 
     @abstractmethod
-    def set_new_section(self, section: Section) -> None:
+    def get_section_metadata(
+        self, title: str, initial_position: tuple[int, int]
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def update_section_coordinates(
+        self, meta_data: dict, coordinates: list[tuple[int, int]]
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_section_name_valid(self, section_name: str) -> bool:
+        pass
+
+    @abstractmethod
+    def add_new_section(
+        self, coordinates: list[tuple[int, int]], get_metadata: MetadataProvider
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -76,15 +166,15 @@ class ViewModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def remove_section(self) -> None:
+    def remove_sections(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def refresh_sections_on_gui(self) -> None:
+    def refresh_items_on_canvas(self) -> None:
         pass
 
     @abstractmethod
-    def get_all_flows(self) -> list[str]:
+    def get_all_flows(self) -> Iterable[Flow]:
         pass
 
     @abstractmethod
@@ -96,11 +186,11 @@ class ViewModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def remove_flow(self) -> None:
+    def remove_flows(self) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def start_analysis(self) -> None:
+    def create_events(self) -> None:
         pass
 
     @abstractmethod
@@ -122,3 +212,83 @@ class ViewModel(ABC):
     @abstractmethod
     def change_track_offset_to_section_offset(self) -> None:
         pass
+
+    @abstractmethod
+    def validate_date(self, date: str) -> bool:
+        pass
+
+    @abstractmethod
+    def validate_hour(self, hour: str) -> bool:
+        pass
+
+    @abstractmethod
+    def validate_minute(self, minute: str) -> bool:
+        pass
+
+    @abstractmethod
+    def validate_second(self, second: str) -> bool:
+        pass
+
+    @abstractmethod
+    def apply_filter_tracks_by_date(self, date_range: DateRange) -> None:
+        pass
+
+    @abstractmethod
+    def apply_filter_tracks_by_class(self, classes: list[str]) -> None:
+        pass
+
+    @abstractmethod
+    def reset_filter_tracks_by_date(self) -> None:
+        pass
+
+    @abstractmethod
+    def reset_filter_tracks_by_class(self) -> None:
+        pass
+
+    @abstractmethod
+    def get_first_detection_occurrence(self) -> Optional[datetime]:
+        pass
+
+    @abstractmethod
+    def get_last_detection_occurrence(self) -> Optional[datetime]:
+        pass
+
+    @abstractmethod
+    def get_filter_tracks_by_date_setting(self) -> DateRange:
+        pass
+
+    @abstractmethod
+    def get_classes(self) -> list[str]:
+        pass
+
+    @abstractmethod
+    def get_class_filter_selection(self) -> Optional[list[str]]:
+        pass
+
+    @abstractmethod
+    def enable_filter_track_by_date(self) -> None:
+        pass
+
+    @abstractmethod
+    def disable_filter_track_by_date(self) -> None:
+        pass
+
+    @abstractmethod
+    def enable_filter_track_by_class(self) -> None:
+        pass
+
+    @abstractmethod
+    def disable_filter_track_by_class(self) -> None:
+        pass
+
+    @abstractmethod
+    def switch_to_prev_date_range(self) -> None:
+        pass
+
+    @abstractmethod
+    def switch_to_next_date_range(self) -> None:
+        pass
+
+    @abstractmethod
+    def export_counts(self) -> None:
+        raise NotImplementedError

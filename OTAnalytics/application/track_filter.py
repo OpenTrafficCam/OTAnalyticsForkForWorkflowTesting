@@ -72,7 +72,7 @@ class TrackHasClassifications(TrackPredicate):
 
     def __init__(
         self,
-        classification: list[str],
+        classification: set[str],
     ) -> None:
         self._classifications = classification
 
@@ -111,13 +111,14 @@ class NoOpTrackFilter(Filter[Track, bool]):
         return iterable
 
 
-class TrackFilterBuilder(FilterBuilder):
+class TrackFilterBuilder(FilterBuilder[Track, bool]):
     """A builder used to build a `TrackFilter`."""
 
     def __init__(self) -> None:
+        super().__init__()
         self._complex_predicate: Optional[Predicate[Track, bool]] = None
 
-    def add_has_classifications_predicate(self, classifications: list[str]) -> None:
+    def add_has_classifications_predicate(self, classifications: set[str]) -> None:
         predicate = TrackHasClassifications(classifications)
         self._conjunct(predicate)
 
@@ -129,11 +130,15 @@ class TrackFilterBuilder(FilterBuilder):
         predicate = TrackEndsBeforeOrAtDate(end_date)
         self._conjunct(predicate)
 
-    def build(self) -> Filter[Track, bool]:
+    def build(self) -> None:
         if self._complex_predicate is None:
-            return NoOpTrackFilter()
+            self._result = NoOpTrackFilter()
+        else:
+            self._result = TrackFilter(self._complex_predicate)
 
-        return TrackFilter(self._complex_predicate)
+    def _reset(self) -> None:
+        self._complex_predicate = None
+        self._result = None
 
     def _conjunct(self, predicate: Predicate[Track, bool]) -> None:
         """Conjuncts a new predicate if an existing predicate was already built by

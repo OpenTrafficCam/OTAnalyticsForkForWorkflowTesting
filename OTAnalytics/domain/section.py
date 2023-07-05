@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
+from typing import Any, Callable, Iterable, Optional
 
 from OTAnalytics.domain.common import DataclassValidation
 from OTAnalytics.domain.geometry import Coordinate, RelativeOffsetCoordinate
+from OTAnalytics.domain.observer import Subject
 from OTAnalytics.domain.types import EventType
 
 SECTIONS: str = "sections"
 ID: str = "id"
+NAME: str = "name"
 TYPE: str = "type"
 LINE: str = "line"
 AREA: str = "area"
@@ -40,37 +42,7 @@ class SectionListObserver(ABC):
         pass
 
 
-VALUE = TypeVar("VALUE")
-
-
 SectionChangedObserver = Callable[[SectionId], None]
-
-
-class SectionChangedSubject(Generic[VALUE]):
-    """
-    Helper class to handle and notify observers
-    """
-
-    def __init__(self) -> None:
-        self.observers: set[SectionChangedObserver] = set()
-
-    def register(self, observer: SectionChangedObserver) -> None:
-        """
-        Listen to events.
-
-        Args:
-            observer (SectionChangedObserver): listener to add
-        """
-        self.observers.add(observer)
-
-    def notify(self, value: SectionId) -> None:
-        """
-        Notifies observers about the changed value.
-
-        Args:
-            value (SectionId): changed value
-        """
-        [observer(value) for observer in self.observers]
 
 
 class SectionListSubject:
@@ -115,6 +87,7 @@ class Section(DataclassValidation):
     """
 
     id: SectionId
+    name: str
     relative_offset_coordinates: dict[EventType, RelativeOffsetCoordinate]
     plugin_data: dict[str, Any]
 
@@ -125,6 +98,16 @@ class Section(DataclassValidation):
 
         Returns:
             list[Coordinate]: all coordinates of this section
+        """
+        pass
+
+    @abstractmethod
+    def update_coordinates(self, coordinates: list[Coordinate]) -> None:
+        """
+        Updates the coordinates of this section.
+
+        Args:
+            coordinates (list[Coordinate]): new coordinates of the section
         """
         pass
 
@@ -187,13 +170,16 @@ class LineSection(Section):
     coordinates: list[Coordinate]
 
     def _validate(self) -> None:
-        if len(self.coordinates) < 2:
+        self.__validate_coordinates(self.coordinates)
+
+    def __validate_coordinates(self, coordinates: list[Coordinate]) -> None:
+        if len(coordinates) < 2:
             raise ValueError(
                 "The number of coordinates to make up a line must be greater equal 2, "
                 f"but is {len(self.coordinates)}"
             )
 
-        if self.coordinates[0] == self.coordinates[-1]:
+        if coordinates[0] == coordinates[-1]:
             raise ValueError(
                 (
                     "Start and end point of coordinate must be different to be a line, "
@@ -204,6 +190,11 @@ class LineSection(Section):
     def get_coordinates(self) -> list[Coordinate]:
         return self.coordinates.copy()
 
+    def update_coordinates(self, coordinates: list[Coordinate]) -> None:
+        self.__validate_coordinates(coordinates)
+        self.coordinates.clear()
+        self.coordinates.extend(coordinates)
+
     def to_dict(self) -> dict:
         """
         Convert section into dict to interact with other parts of the system,
@@ -211,6 +202,7 @@ class LineSection(Section):
         """
         return {
             ID: self.id.serialize(),
+            NAME: self.name,
             TYPE: LINE,
             RELATIVE_OFFSET_COORDINATES: self._serialize_relative_offset_coordinates(),
             COORDINATES: [coordinate.to_dict() for coordinate in self.coordinates],
@@ -243,7 +235,10 @@ class Area(Section):
     coordinates: list[Coordinate]
 
     def _validate(self) -> None:
-        if len(self.coordinates) < 4:
+        self.__validate_coordinates(self.coordinates)
+
+    def __validate_coordinates(self, coordinates: list[Coordinate]) -> None:
+        if len(coordinates) < 4:
             raise ValueError(
                 (
                     "Number of coordinates to define a valid area must be "
@@ -251,11 +246,16 @@ class Area(Section):
                 )
             )
 
-        if self.coordinates[0] != self.coordinates[-1]:
+        if coordinates[0] != coordinates[-1]:
             raise ValueError("Coordinates do not define a closed area")
 
     def get_coordinates(self) -> list[Coordinate]:
         return self.coordinates.copy()
+
+    def update_coordinates(self, coordinates: list[Coordinate]) -> None:
+        self.__validate_coordinates(coordinates)
+        self.coordinates.clear()
+        self.coordinates.extend(coordinates)
 
     def to_dict(self) -> dict:
         """
@@ -265,6 +265,7 @@ class Area(Section):
         return {
             TYPE: AREA,
             ID: self.id.serialize(),
+            NAME: self.name,
             RELATIVE_OFFSET_COORDINATES: self._serialize_relative_offset_coordinates(),
             COORDINATES: [coordinate.to_dict() for coordinate in self.coordinates],
             PLUGIN_DATA: self.plugin_data,
@@ -280,8 +281,9 @@ class SectionRepository:
 
     def __init__(self) -> None:
         self._sections: dict[SectionId, Section] = {}
+        self._current_id = 0
         self._repository_content_observers: SectionListSubject = SectionListSubject()
-        self._section_content_observers: SectionChangedSubject = SectionChangedSubject()
+        self._section_content_observers: Subject[SectionId] = Subject[SectionId]()
 
     def register_sections_observer(self, observer: SectionListObserver) -> None:
         self._repository_content_observers.register(observer)
@@ -290,6 +292,11 @@ class SectionRepository:
         self, observer: SectionChangedObserver
     ) -> None:
         self._section_content_observers.register(observer)
+
+    def get_id(self) -> SectionId:
+        self._current_id += 1
+        candidate = SectionId(str(self._current_id))
+        return self.get_id() if candidate in self._sections.keys() else candidate
 
     def add(self, section: Section) -> None:
         """Add a section to the repository.
@@ -344,7 +351,7 @@ class SectionRepository:
             section (Section): the section to be removed
         """
         del self._sections[section]
-        self._repository_content_observers.notify([section])
+        self._repository_content_observers.notify([])
 
     def update(self, section: Section) -> None:
         """Update the section in the repository.
@@ -369,3 +376,10 @@ class SectionRepository:
         section.plugin_data.clear()
         section.plugin_data.update(plugin_data)
         self._section_content_observers.notify(section_id)
+
+    def clear(self) -> None:
+        """
+        Clear the repository and inform the observers about the empty repository.
+        """
+        self._sections.clear()
+        self._repository_content_observers.notify([])
