@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 
-from OTAnalytics.plugin_parser.otvision_parser import OtsectionParser
+from OTAnalytics.plugin_parser.otvision_parser import OtFlowParser
 
 
 class Counter:
@@ -26,7 +26,7 @@ class Counter:
         self.DIRECTION_NAMES = config["DIRECTION_NAMES"]
         self.EVENTS = events
 
-        otsection_parser = OtsectionParser()
+        otsection_parser = OtFlowParser()
         self.SECTIONS = otsection_parser.parse(self.SECTIONSLIST_PATH)
 
         if self.FROM_TIME != "":
@@ -235,7 +235,7 @@ class Counter:
         intervals = self.INTERVALS
 
         # Import Sectionlist
-        section_list = [section.id.id for section in self.SECTIONS]
+        section_list = [section for section in self.SECTIONS]
 
         if filter_sections != []:
             section_list = [s for s in section_list if s in filter_sections]
@@ -426,7 +426,7 @@ class Counter:
         # Set time intervals
         intervals = self.INTERVALS
         # Import Sectionlist
-        section_list = [section.id.id for section in self.SECTIONS]
+        section_list = [section for section in self.SECTIONS]
 
         if filter_sections != []:
             section_list = [s for s in section_list if s in filter_sections]
