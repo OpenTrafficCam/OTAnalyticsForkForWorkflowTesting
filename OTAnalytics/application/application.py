@@ -1,3 +1,4 @@
+from abc import ABC
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
@@ -6,14 +7,13 @@ from OTAnalytics.application.analysis.intersect import (
     RunIntersect,
     RunSceneEventDetection,
 )
-from OTAnalytics.application.analysis.traffic_counting import (
+from OTAnalytics.application.analysis.traffic_counting_specification import (
     CountingSpecificationDto,
+    ExportCounts,
     ExportFormat,
-    ExportTrafficCounting,
-    RoadUserAssigner,
-    SimpleTaggerFactory,
 )
-from OTAnalytics.application.datastore import Datastore
+from OTAnalytics.application.datastore import Datastore, EventListExporter
+from OTAnalytics.application.generate_flows import GenerateFlows
 from OTAnalytics.application.state import (
     ActionState,
     FlowState,
@@ -40,16 +40,9 @@ from OTAnalytics.domain.section import (
     SectionListObserver,
     SectionRepository,
 )
-from OTAnalytics.domain.track import (
-    TrackId,
-    TrackIdProvider,
-    TrackImage,
-    TrackListObserver,
-    TrackRepository,
-)
+from OTAnalytics.domain.track import TrackId, TrackImage, TrackListObserver
 from OTAnalytics.domain.types import EventType
 from OTAnalytics.domain.video import Video, VideoListObserver
-from OTAnalytics.plugin_parser.export import SimpleExporterFactory
 
 
 class SectionAlreadyExists(Exception):
@@ -149,115 +142,9 @@ class ClearEventRepository(SectionListObserver, TrackListObserver):
         self.clear()
 
 
-class IntersectTracksWithSections:
-    """Intersect tracks with sections and add all intersection events in the repository.
-
-    Args:
-        intersect (RunIntersect): intersector to intersect tracks with sections
-        datastore (Datastore): the datastore containing tracks, sections and events
-    """
-
-    def __init__(
-        self,
-        intersect: RunIntersect,
-        datastore: Datastore,
-    ) -> None:
-        self._intersect = intersect
-        self._datastore = datastore
-
+class IntersectTracksWithSections(ABC):
     def run(self) -> None:
-        """Runs the intersection of tracks with sections in the repository."""
-        sections = self._datastore.get_all_sections()
-        if not sections:
-            return
-        tracks = self._datastore.get_all_tracks()
-        events = self._intersect.run(tracks, sections)
-        self._datastore.add_events(events)
-
-
-class TracksIntersectingSelectedSections(TrackIdProvider):
-    """Returns track ids intersecting selected sections.
-
-    Args:
-        section_state (SectionState): the section state
-        event_repository (EventRepository): the event repository
-    """
-
-    def __init__(
-        self,
-        section_state: SectionState,
-        event_repository: EventRepository,
-    ) -> None:
-        self._section_state = section_state
-        self._event_repository = event_repository
-
-    def get_ids(self) -> Iterable[TrackId]:
-        intersecting_ids: set[TrackId] = set()
-
-        currently_selected_sections = self._section_state.selected_sections.get()
-        for section_id in currently_selected_sections:
-            for event in self._event_repository.get_all():
-                if event.section_id == section_id:
-                    intersecting_ids.add(TrackId(event.road_user_id))
-        return intersecting_ids
-
-
-class TracksNotIntersectingSelection(TrackIdProvider):
-    """Returns track ids that are not intersecting the current selection sections.
-
-    Args:
-        track_id_provider (TrackIdProvider): tracks intersecting the current selection
-        track_repository (EventRepository): the track repository
-    """
-
-    def __init__(
-        self,
-        track_id_provider: TrackIdProvider,
-        track_repository: TrackRepository,
-    ) -> None:
-        self._track_id_provider = track_id_provider
-        self._track_repository = track_repository
-
-    def get_ids(self) -> Iterable[TrackId]:
-        all_track_ids = {track.id for track in self._track_repository.get_all()}
-        assigned_tracks = set(self._track_id_provider.get_ids())
-        return all_track_ids - assigned_tracks
-
-
-class TracksAssignedToSelectedFlows(TrackIdProvider):
-    """Returns track ids that are assigned to the currently selected flows.
-
-    Args:
-        assigner (RoadUserAssigner): to assign tracks to flows
-        event_repository (EventRepository): the event repository
-        flow_repository (FlowRepository): the track repository
-        flow_state (FlowState): the currently selected flows
-    """
-
-    def __init__(
-        self,
-        assigner: RoadUserAssigner,
-        event_repository: EventRepository,
-        flow_repository: FlowRepository,
-        flow_state: FlowState,
-    ) -> None:
-        self._assigner = assigner
-        self._event_repository = event_repository
-        self._flow_repository = flow_repository
-        self._flow_state = flow_state
-
-    def get_ids(self) -> Iterable[TrackId]:
-        events = self._event_repository.get_all()
-        # All flows must be passed to assigner to ensure that a track potentially
-        # belonging to several flows is assigned to the correct one.
-        all_flows = self._flow_repository.get_all()
-        assignments = self._assigner.assign(events, all_flows).as_list()
-
-        ids = set()
-        for assignment in assignments:
-            if assignment.assignment.id in self._flow_state.selected_flows.get():
-                ids.add(TrackId(assignment.road_user))
-        return ids
+        raise NotImplementedError
 
 
 class OTAnalyticsApplication:
@@ -277,6 +164,9 @@ class OTAnalyticsApplication:
         tracks_metadata: TracksMetadata,
         action_state: ActionState,
         filter_element_setting_restorer: FilterElementSettingRestorer,
+        generate_flows: GenerateFlows,
+        intersect_tracks_with_sections: IntersectTracksWithSections,
+        export_counts: ExportCounts,
     ) -> None:
         self._datastore: Datastore = datastore
         self.track_state: TrackState = track_state
@@ -290,22 +180,12 @@ class OTAnalyticsApplication:
         self._filter_element_setting_restorer = filter_element_setting_restorer
         self._add_section = AddSection(self._datastore._section_repository)
         self._add_flow = AddFlow(self._datastore._flow_repository)
-        self._intersect_tracks_with_sections = IntersectTracksWithSections(
-            self._intersect, self._datastore
-        )
+        self._generate_flows = generate_flows
+        self._intersect_tracks_with_sections = intersect_tracks_with_sections
         self._clear_event_repository = ClearEventRepository(
             self._datastore._event_repository
         )
-        self._export_counts = self.__create_export_traffic_counting()
-
-    def __create_export_traffic_counting(self) -> ExportTrafficCounting:
-        return ExportTrafficCounting(
-            self._datastore._event_repository,
-            self._datastore._flow_repository,
-            RoadUserAssigner(),
-            SimpleTaggerFactory(self._datastore._track_repository),
-            SimpleExporterFactory(),
-        )
+        self._export_counts = export_counts
 
     def connect_observers(self) -> None:
         """
@@ -388,6 +268,9 @@ class OTAnalyticsApplication:
 
     def add_flow(self, flow: Flow) -> None:
         self._add_flow.add(flow)
+
+    def generate_flows(self) -> None:
+        self._generate_flows.generate()
 
     def remove_flow(self, flow_id: FlowId) -> None:
         self._datastore.remove_flow(flow_id)
@@ -566,6 +449,16 @@ class OTAnalyticsApplication:
             file (Path): file to save the events to
         """
         self._datastore.save_event_list_file(file)
+
+    def export_events(self, file: Path, event_list_exporter: EventListExporter) -> None:
+        """
+        Export the event repository into other formats (like CSV or Excel)
+
+        Args:
+            file (Path): File to export the events to
+            event_list_exporter (EventListExporter): Exporter building the format
+        """
+        self._datastore.export_event_list_file(file, event_list_exporter)
 
     def get_supported_export_formats(self) -> Iterable[ExportFormat]:
         """

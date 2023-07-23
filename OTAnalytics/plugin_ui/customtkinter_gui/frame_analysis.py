@@ -1,10 +1,10 @@
-from tkinter.filedialog import asksaveasfilename
 from typing import Any
 
 from customtkinter import CTkButton, CTkFrame, CTkLabel
 
 from OTAnalytics.adapter_ui.view_model import ViewModel
 from OTAnalytics.plugin_ui.customtkinter_gui.constants import PADX, PADY, STICKY
+from OTAnalytics.plugin_ui.customtkinter_gui.helpers import ask_for_save_file_name
 
 
 class FrameAnalysis(CTkFrame):
@@ -26,6 +26,9 @@ class FrameAnalysis(CTkFrame):
             text="Save eventlist",
             command=self._save_eventlist,
         )
+        self.button_export_eventlist = CTkButton(
+            master=self, text="Export eventlist", command=self._viewmodel.export_events
+        )
         self.button_export_counts = CTkButton(
             master=self, text="Export counts", command=self._viewmodel.export_counts
         )
@@ -38,8 +41,11 @@ class FrameAnalysis(CTkFrame):
         self._button_save_eventlist.grid(
             row=2, column=0, padx=PADX, pady=PADY, sticky=STICKY
         )
-        self.button_export_counts.grid(
+        self.button_export_eventlist.grid(
             row=3, column=0, padx=PADX, pady=PADY, sticky=STICKY
+        )
+        self.button_export_counts.grid(
+            row=4, column=0, padx=PADX, pady=PADY, sticky=STICKY
         )
 
     def _create_events(self) -> None:
@@ -47,10 +53,11 @@ class FrameAnalysis(CTkFrame):
         self._viewmodel.create_events()
 
     def _save_eventlist(self) -> None:
-        file = asksaveasfilename(
+        file = ask_for_save_file_name(
             title="Save event list file as",
             filetypes=[("events file", "*.otevents")],
             defaultextension=".otevents",
+            initialfile="events.otevents",
         )
         if not file:
             return
