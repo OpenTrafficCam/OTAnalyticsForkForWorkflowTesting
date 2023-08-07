@@ -12,7 +12,7 @@ from OTAnalytics.application.analysis.traffic_counting_specification import (
     ExportCounts,
     ExportFormat,
 )
-from OTAnalytics.application.datastore import Datastore, EventListExporter
+from OTAnalytics.application.datastore import Datastore
 from OTAnalytics.application.generate_flows import GenerateFlows
 from OTAnalytics.application.state import (
     ActionState,
@@ -22,6 +22,9 @@ from OTAnalytics.application.state import (
     TrackState,
     TrackViewState,
 )
+from OTAnalytics.application.use_cases.config import SaveOtconfig
+from OTAnalytics.application.use_cases.export_events import EventListExporter
+from OTAnalytics.application.use_cases.update_project import ProjectUpdater
 from OTAnalytics.domain.date import DateRange
 from OTAnalytics.domain.event import EventRepository
 from OTAnalytics.domain.filter import FilterElement, FilterElementSettingRestorer
@@ -186,6 +189,10 @@ class OTAnalyticsApplication:
             self._datastore._event_repository
         )
         self._export_counts = export_counts
+        self._project_updater = ProjectUpdater(datastore)
+        self._save_otconfig = SaveOtconfig(
+            datastore, config_parser=datastore._config_parser
+        )
 
     def connect_observers(self) -> None:
         """
@@ -278,17 +285,14 @@ class OTAnalyticsApplication:
     def update_flow(self, flow: Flow) -> None:
         self._datastore.update_flow(flow)
 
-    def save_configuration(self, file: Path) -> None:
-        self._datastore._config_parser.serialize(
-            project=self._datastore.project,
-            video_files=self.get_all_videos(),
-            sections=self.get_all_sections(),
-            flows=self.get_all_flows(),
-            file=file,
-        )
+    def update_project(self, name: str, start_date: Optional[datetime]) -> None:
+        self._project_updater(name, start_date)
 
-    def load_configuration(self, file: Path) -> None:
-        self._datastore.load_configuration_file(file)
+    def save_otconfig(self, file: Path) -> None:
+        self._save_otconfig(file)
+
+    def load_otconfig(self, file: Path) -> None:
+        self._datastore.load_otconfig(file)
 
     def add_tracks_of_file(self, track_file: Path) -> None:
         """
@@ -312,14 +316,14 @@ class OTAnalyticsApplication:
         """Delete all tracks."""
         self._datastore.delete_all_tracks()
 
-    def add_sections_of_file(self, sections_file: Path) -> None:
+    def load_otflow(self, sections_file: Path) -> None:
         """
         Load sections from a sections file.
 
         Args:
             sections_file (Path): file in sections format
         """
-        self._datastore.load_flow_file(file=sections_file)
+        self._datastore.load_otflow(file=sections_file)
 
     def is_flow_using_section(self, section: SectionId) -> bool:
         """
@@ -402,7 +406,7 @@ class OTAnalyticsApplication:
             section_id=section_id, plugin_data=plugin_data
         )
 
-    def save_flows(self, file: Path) -> None:
+    def save_otflow(self, file: Path) -> None:
         """
         Save the flows and sections from the repositories into a file.
 

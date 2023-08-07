@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Tuple
 
 from OTAnalytics.application.our_custom_group_exception import OurCustomGroupException
 from OTAnalytics.application.project import Project
+from OTAnalytics.application.use_cases.export_events import EventListExporter
 from OTAnalytics.domain.event import Event, EventRepository
 from OTAnalytics.domain.flow import (
     Flow,
@@ -218,29 +218,6 @@ class NoSectionsToSave(Exception):
     pass
 
 
-class EventListExporter(ABC):
-    """
-    Export the events (and sections) from their repostories to external file formats
-    like CSV or Excel.
-    Theese formats are not meant to be imported again, cause during export,
-    information will be lost.
-    """
-
-    @abstractmethod
-    def export(
-        self, events: Iterable[Event], sections: Iterable[Section], file: Path
-    ) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_extension(self) -> str:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_name(self) -> str:
-        raise NotImplementedError
-
-
 class Datastore:
     """
     Central element to hold data in the application.
@@ -275,7 +252,7 @@ class Datastore:
         self._track_to_video_repository = track_to_video_repository
         self._progressbar = progressbar
         self._config_parser = config_parser
-        self.project = Project(name="", start_date=datetime.now())
+        self.project = Project(name="", start_date=None)
 
     def register_video_observer(self, observer: VideoListObserver) -> None:
         self._video_repository.register_videos_observer(observer)
@@ -298,7 +275,7 @@ class Datastore:
         """
         self._section_repository.register_sections_observer(observer)
 
-    def load_configuration_file(self, file: Path) -> None:
+    def load_otconfig(self, file: Path) -> None:
         self.clear_repositories()
         config = self._config_parser.parse(file)
         self.project = config.project
@@ -374,7 +351,7 @@ class Datastore:
             except Exception as cause:
                 raised_exceptions.append(cause)
         if raised_exceptions:
-            raise OurCustomGroupException(raised_exceptions)
+            raise ExceptionGroup("load track files", raised_exceptions)
 
     def get_all_tracks(self) -> list[Track]:
         """
@@ -389,7 +366,7 @@ class Datastore:
         """Delete all tracks in repository."""
         self._track_repository.delete_all()
 
-    def load_flow_file(self, file: Path) -> None:
+    def load_otflow(self, file: Path) -> None:
         """
         Load sections and flows from the given files and store them in the repositories.
 
