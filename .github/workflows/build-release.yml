@@ -15,7 +15,7 @@ jobs:
     needs: test
     uses: "platomo/GitHub-workflows/.github/workflows/reusable-create-release-with-assets.yml@main"
     with:
-      secrets: inherit
       package-version: ${{ github.ref_name }}
       draft-release: True
       pre-release: False
+    secrets: inherit
