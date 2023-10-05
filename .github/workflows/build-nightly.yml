@@ -15,7 +15,7 @@ jobs:
     secrets: 
        PLATOMO_BUILDER_ACCESS: ${{ secrets.PLATOMO_BUILDER_ACCESS }}
     with:
-      package-version: nightly
+      package-version: nightlyyy
       draft-release: True
       pre-release: True
      
