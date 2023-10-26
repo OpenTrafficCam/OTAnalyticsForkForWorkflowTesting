@@ -6,7 +6,7 @@ on:
   # Needs: secrets.PLATOMO_BUILDER_ACCESS
   push:
     branches:
-      - main
+
 
 jobs:
   test:

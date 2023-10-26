@@ -27,8 +27,8 @@ jobs:
           if [ -f "requirements-dev.txt" ]; then
               pip install -r requirements-dev.txt
           fi
-          pytest /tests/benchmark_otanalytics_draft.py --benchmark-json output.json
-
+      - name: Run test
+        run : pytest /tests/benchmark_otanalytics_draft.py --benchmark-json output.json
       - name: Store benchmark result - separate results repo
         uses: benchmark-action/github-action-benchmark@v1
         with:
