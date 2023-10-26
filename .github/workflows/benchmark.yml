@@ -21,7 +21,6 @@ jobs:
       - name: Run benchmark
         run: |
           pip install -r requirements.txt
-          pip install -r requirements-dev.txt
           pytest /tests/benchmark_otanalytics_draft.py --benchmark-json output.json
 
       - name: Store benchmark result - separate results repo
