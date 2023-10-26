@@ -12,7 +12,7 @@ permissions:
 jobs:
   benchmark:
     name: Run pytest-benchmark benchmark example
-    runs-on: [self-hosted]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
