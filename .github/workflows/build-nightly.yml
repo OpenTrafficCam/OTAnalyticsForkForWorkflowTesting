@@ -2,11 +2,11 @@
 name: Build Nightly Version
 
 on:
-  # Creates Nightly Release of main
+  # Create release if tag is pushed to main.
   # Needs: secrets.PLATOMO_BUILDER_ACCESS
   push:
-    branches:
-
+    tags:
+      - "v*.*.*.*"
 
 jobs:
   test:
