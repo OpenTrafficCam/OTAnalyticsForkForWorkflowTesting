@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   benchmark:
-    name: Run pytest-benchmark benchmark example
+    name: Run pytest-benchmark benchmark exampl
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
