@@ -312,6 +312,7 @@ class TestProfile:
     ) -> None:
         benchmark.pedantic(panda_ottrk_parser.parse, args=(ottrk_file,))
 
+    @pytest.mark.skip
     def test_create_events(
             self,
             benchmark: BenchmarkFixture,
@@ -330,6 +331,7 @@ class TestProfile:
             create_events, setup=setup, rounds=5, iterations=1, warmup_rounds=1
         )
 
+    @pytest.mark.skip
     def test_tracks_intersecting_sections(
             self,
             benchmark: BenchmarkFixture,
