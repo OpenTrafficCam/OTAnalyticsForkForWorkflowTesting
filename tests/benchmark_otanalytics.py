@@ -6,6 +6,7 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from OTAnalytics.application.analysis.intersect import TracksIntersectingSections
 from OTAnalytics.application.application import OTAnalyticsApplication
+from OTAnalytics.application.datastore import VideoParser, TrackToVideoRepository
 from OTAnalytics.application.use_cases.create_events import CreateEvents
 from OTAnalytics.application.use_cases.event_repository import AddEvents, ClearAllEvents
 from OTAnalytics.application.use_cases.load_otflow import LoadOtflow
@@ -19,6 +20,7 @@ from OTAnalytics.domain.flow import FlowRepository
 from OTAnalytics.domain.progress import NoProgressbarBuilder
 from OTAnalytics.domain.section import SectionRepository
 from OTAnalytics.domain.track import Track, TrackFileRepository, TrackRepository
+from OTAnalytics.domain.video import VideoRepository
 from OTAnalytics.plugin_intersect.shapely.intersect import ShapelyIntersector
 from OTAnalytics.plugin_ui.main_application import ApplicationStarter
 
@@ -106,9 +108,12 @@ def track_file_repository() -> TrackFileRepository:
 
 
 def create_app(
+    video_parser: VideoParser,
+    video_repository: VideoRepository,
     starter: ApplicationStarter,
     track_repository: TrackRepository,
     track_file_repository: TrackFileRepository,
+    track_to_video_repository: TrackToVideoRepository,
     section_repository: SectionRepository,
     flow_repository: FlowRepository,
     event_repository: EventRepository,
@@ -116,8 +121,11 @@ def create_app(
     starter = ApplicationStarter()
     progressbar = NoProgressbarBuilder()
     datastore = starter._create_datastore(
+        video_parser,
+        video_repository,
         track_repository,
         track_file_repository,
+        track_to_video_repository,
         section_repository,
         flow_repository,
         event_repository,
