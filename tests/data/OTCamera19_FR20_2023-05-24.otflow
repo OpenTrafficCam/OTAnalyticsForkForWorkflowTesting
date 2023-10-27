@@ -1,0 +1,294 @@
+{
+    "sections": [
+        {
+            "id": "1",
+            "name": "S\u00fcd",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 1.0,
+                    "y": 0.7
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 30,
+                    "y": 261
+                },
+                {
+                    "x": 296,
+                    "y": 725
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "2",
+            "name": "Ost",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.0,
+                    "y": 0.7
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 293,
+                    "y": 724
+                },
+                {
+                    "x": 787,
+                    "y": 316
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "3",
+            "name": "Nord",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.1,
+                    "y": 0.8
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 790,
+                    "y": 317
+                },
+                {
+                    "x": 307,
+                    "y": 210
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "4",
+            "name": "West",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 1.0,
+                    "y": 0.8
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 309,
+                    "y": 209
+                },
+                {
+                    "x": 32,
+                    "y": 257
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "5",
+            "name": "Furt Ost S\u00fcdseite",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.5,
+                    "y": 1.0
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 564,
+                    "y": 449
+                },
+                {
+                    "x": 1007,
+                    "y": 633
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "6",
+            "name": "Furt Ost Nordseite",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.5,
+                    "y": 1.0
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 637,
+                    "y": 360
+                },
+                {
+                    "x": 1014,
+                    "y": 519
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "7",
+            "name": "Furt Nord Westseite",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.5,
+                    "y": 1.0
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 439,
+                    "y": 243
+                },
+                {
+                    "x": 591,
+                    "y": 213
+                }
+            ],
+            "plugin_data": {}
+        },
+        {
+            "id": "8",
+            "name": "Furt Nord Ostseite",
+            "type": "line",
+            "relative_offset_coordinates": {
+                "section-enter": {
+                    "x": 0.5,
+                    "y": 1.0
+                }
+            },
+            "coordinates": [
+                {
+                    "x": 642,
+                    "y": 221
+                },
+                {
+                    "x": 492,
+                    "y": 267
+                }
+            ],
+            "plugin_data": {}
+        }
+    ],
+    "flows": [
+        {
+            "id": "1",
+            "name": "S\u00fcd --> Ost",
+            "start": "1",
+            "end": "2",
+            "distance": 0
+        },
+        {
+            "id": "2",
+            "name": "S\u00fcd --> Nord",
+            "start": "1",
+            "end": "3",
+            "distance": 0
+        },
+        {
+            "id": "3",
+            "name": "S\u00fcd --> West",
+            "start": "1",
+            "end": "4",
+            "distance": 0
+        },
+        {
+            "id": "8",
+            "name": "Ost --> S\u00fcd",
+            "start": "2",
+            "end": "1",
+            "distance": 0
+        },
+        {
+            "id": "9",
+            "name": "Ost --> Nord",
+            "start": "2",
+            "end": "3",
+            "distance": 0
+        },
+        {
+            "id": "10",
+            "name": "Ost --> West",
+            "start": "2",
+            "end": "4",
+            "distance": 0
+        },
+        {
+            "id": "15",
+            "name": "Nord --> S\u00fcd",
+            "start": "3",
+            "end": "1",
+            "distance": 0
+        },
+        {
+            "id": "16",
+            "name": "Nord --> Ost",
+            "start": "3",
+            "end": "2",
+            "distance": 0
+        },
+        {
+            "id": "17",
+            "name": "Nord --> West",
+            "start": "3",
+            "end": "4",
+            "distance": 0
+        },
+        {
+            "id": "22",
+            "name": "West --> S\u00fcd",
+            "start": "4",
+            "end": "1",
+            "distance": 0
+        },
+        {
+            "id": "23",
+            "name": "West --> Ost",
+            "start": "4",
+            "end": "2",
+            "distance": 0
+        },
+        {
+            "id": "24",
+            "name": "West --> Nord",
+            "start": "4",
+            "end": "3",
+            "distance": 0
+        },
+        {
+            "id": "33",
+            "name": "Furt Ost S\u00fcdseite --> Furt Ost Nordseite",
+            "start": "5",
+            "end": "6",
+            "distance": 0
+        },
+        {
+            "id": "40",
+            "name": "Furt Ost Nordseite --> Furt Ost S\u00fcdseite",
+            "start": "6",
+            "end": "5",
+            "distance": 0
+        },
+        {
+            "id": "49",
+            "name": "Furt Nord Westseite --> Furt Nord Ostseite",
+            "start": "7",
+            "end": "8",
+            "distance": 0
+        },
+        {
+            "id": "56",
+            "name": "Furt Nord Ostseite --> Furt Nord Westseite",
+            "start": "8",
+            "end": "7",
+            "distance": 0
+        }
+    ]
+}

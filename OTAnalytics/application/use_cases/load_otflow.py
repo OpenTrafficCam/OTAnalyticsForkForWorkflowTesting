@@ -36,12 +36,12 @@ class LoadOtflow:
 
     def __init__(
         self,
-        clear_all_sections: ClearAllSections,
-        clear_all_flows: ClearAllFlows,
-        clear_all_events: ClearAllEvents,
-        flow_parser: FlowParser,
-        add_section: AddSection,
-        add_flow: AddFlow,
+            clear_all_sections: ClearAllSections,
+            clear_all_flows: ClearAllFlows,
+            clear_all_events: ClearAllEvents,
+            flow_parser: FlowParser,
+            add_section: AddSection,
+            add_flow: AddFlow,
     ) -> None:
         self._clear_all_sections = clear_all_sections
         self._clear_all_flows = clear_all_flows

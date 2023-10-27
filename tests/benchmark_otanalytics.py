@@ -6,37 +6,43 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from OTAnalytics.application.analysis.intersect import TracksIntersectingSections
 from OTAnalytics.application.application import OTAnalyticsApplication
-from OTAnalytics.application.datastore import VideoParser, TrackToVideoRepository
+from OTAnalytics.application.datastore import VideoParser, TrackToVideoRepository, TrackParser
+from OTAnalytics.application.state import TrackViewState
+from OTAnalytics.application.use_cases.clear_repositories import ClearRepositories
 from OTAnalytics.application.use_cases.create_events import CreateEvents
 from OTAnalytics.application.use_cases.event_repository import AddEvents, ClearAllEvents
+from OTAnalytics.application.use_cases.flow_repository import AddFlow, ClearAllFlows
 from OTAnalytics.application.use_cases.load_otflow import LoadOtflow
+from OTAnalytics.application.use_cases.load_track_files import LoadTrackFiles
+from OTAnalytics.application.use_cases.reset_project_config import ResetProjectConfig
+from OTAnalytics.application.use_cases.section_repository import GetSectionsById, AddSection, ClearAllSections
+from OTAnalytics.application.use_cases.start_new_project import StartNewProject
 from OTAnalytics.application.use_cases.track_repository import (
     GetAllTrackFiles,
     GetAllTracks,
     GetTracksWithoutSingleDetections,
 )
+from OTAnalytics.application.use_cases.update_project import ProjectUpdater
 from OTAnalytics.domain.event import EventRepository
 from OTAnalytics.domain.flow import FlowRepository
 from OTAnalytics.domain.progress import NoProgressbarBuilder
 from OTAnalytics.domain.section import SectionRepository
-from OTAnalytics.domain.track import Track, TrackFileRepository, TrackRepository
-from OTAnalytics.domain.video import VideoRepository
+from OTAnalytics.domain.track import Track, TrackFileRepository, TrackRepository, ByMaxConfidence
+from OTAnalytics.domain.video import VideoRepository, VideoReader
+from OTAnalytics.plugin_datastore.track_store import PandasTrackClassificationCalculator, PandasByMaxConfidence
 from OTAnalytics.plugin_intersect.shapely.intersect import ShapelyIntersector
+from OTAnalytics.plugin_parser.otvision_parser import SimpleVideoParser, OttrkParser, PythonDetectionParser
+from OTAnalytics.plugin_parser.pandas_parser import PandasDetectionParser
 from OTAnalytics.plugin_ui.main_application import ApplicationStarter
 
 
 @pytest.fixture
-def ottrk_file() -> Path:
-    return Path(
-        "/Users/rseng/dev/OpenTrafficCam/OTAnalytics/tests/data/Standard_SCUCKE_FR30_2023-04-18_08-00-00.ottrk"  # noqa
-    )
-
+def ottrk_file(test_data_dir: Path) -> Path:
+    return Path(test_data_dir / "OTCamera19_FR20_2023-05-24_00-30-00.ottrk")
 
 @pytest.fixture
-def otflow_file() -> Path:
-    return Path(
-        "/Users/rseng/dev/OpenTrafficCam/OTAnalytics/tests/data/sections_flows.otflow"  # noqa
-    )
+def otflow_file(test_data_dir: Path) -> Path:
+    return test_data_dir / Path("OTCamera19_FR20_2023-05-24_00-30-00.ottrk")
 
 
 @pytest.fixture
@@ -47,6 +53,26 @@ def track_repository() -> TrackRepository:
 @pytest.fixture
 def section_repository() -> SectionRepository:
     return SectionRepository()
+
+
+@pytest.fixture
+def video_reader() -> VideoReader:
+    return VideoReader()
+
+
+@pytest.fixture
+def video_parser() -> VideoParser:
+    return SimpleVideoParser(video_reader)
+
+
+@pytest.fixture
+def video_repository() -> VideoRepository:
+    return VideoRepository()
+
+
+@pytest.fixture
+def track_to_video_repository() -> TrackToVideoRepository:
+    return TrackToVideoRepository()
 
 
 @pytest.fixture
@@ -65,13 +91,18 @@ def starter() -> ApplicationStarter:
 
 
 @pytest.fixture
+def get_sections_by_id() -> GetSectionsById:
+    return GetSectionsById(section_repository)
+
+
+@pytest.fixture
 def get_all_tracks(track_repository: TrackRepository) -> GetAllTracks:
     return GetAllTracks(track_repository)
 
 
 @pytest.fixture
 def get_tracks_without_single_detections(
-    track_repository: TrackRepository,
+        track_repository: TrackRepository,
 ) -> GetTracksWithoutSingleDetections:
     return GetTracksWithoutSingleDetections(track_repository)
 
@@ -88,11 +119,11 @@ def clear_events(event_repository: EventRepository) -> ClearAllEvents:
 
 @pytest.fixture
 def create_events(
-    starter: ApplicationStarter,
-    section_repository: SectionRepository,
-    clear_all_events: ClearAllEvents,
-    get_tracks_without_single_detections: GetTracksWithoutSingleDetections,
-    add_events: AddEvents,
+        starter: ApplicationStarter,
+        section_repository: SectionRepository,
+        clear_all_events: ClearAllEvents,
+        get_tracks_without_single_detections: GetTracksWithoutSingleDetections,
+        add_events: AddEvents,
 ) -> CreateEvents:
     return starter._create_use_case_create_events(
         section_repository,
@@ -106,17 +137,26 @@ def create_events(
 def track_file_repository() -> TrackFileRepository:
     return TrackFileRepository()
 
+@pytest.fixture
+def python_ottrk_parser(track_repository: TrackRepository) -> TrackParser:
+    detection_parser = PythonDetectionParser(ByMaxConfidence(), track_repository)
+    return OttrkParser(detection_parser)
+
+@pytest.fixture
+def panda_ottrk_parser(track_repository: TrackRepository) -> TrackParser:
+    calculator = PandasByMaxConfidence()
+    detection_parser = PandasDetectionParser(calculator)
+    return OttrkParser(detection_parser)
 
 def create_app(
-    video_parser: VideoParser,
-    video_repository: VideoRepository,
-    starter: ApplicationStarter,
-    track_repository: TrackRepository,
-    track_file_repository: TrackFileRepository,
-    track_to_video_repository: TrackToVideoRepository,
-    section_repository: SectionRepository,
-    flow_repository: FlowRepository,
-    event_repository: EventRepository,
+        video_parser: VideoParser,
+        video_repository: VideoRepository,
+        track_repository: TrackRepository,
+        track_file_repository: TrackFileRepository,
+        track_to_video_repository: TrackToVideoRepository,
+        section_repository: SectionRepository,
+        flow_repository: FlowRepository,
+        event_repository: EventRepository,
 ) -> OTAnalyticsApplication:
     starter = ApplicationStarter()
     progressbar = NoProgressbarBuilder()
@@ -136,7 +176,17 @@ def create_app(
     section_state = starter._create_section_state(section_repository)
     flow_state = starter._create_flow_state()
     clear_all_events = ClearAllEvents(event_repository)
-
+    clear_all_sections = ClearAllSections(section_repository)
+    clear_all_flows = ClearAllFlows(flow_repository)
+    add_section = AddSection(section_repository)
+    add_flow = AddFlow(flow_repository)
+    load_otflow = starter._create_use_case_load_otflow(
+        clear_all_sections,
+        clear_all_flows,
+        clear_all_events,
+        datastore._flow_parser,
+        add_section,
+        add_flow, )
     get_all_tracks = GetAllTracks(track_repository)
     get_tracks_without_single_detections = GetTracksWithoutSingleDetections(
         track_repository
@@ -147,17 +197,24 @@ def create_app(
         clear_all_events,
         get_tracks_without_single_detections,
         add_events,
+        num_processes=1
     )
     tracks_metadata = starter._create_tracks_metadata(track_repository)
     action_state = starter._create_action_state()
     filter_element_settings_restorer = starter._create_filter_element_setting_restorer()
     generate_flows = starter._create_flow_generator(section_repository, flow_repository)
     create_intersection_events = starter._create_use_case_create_intersection_events(
-        section_repository, get_tracks_without_single_detections, add_events
+        section_repository, get_tracks_without_single_detections, add_events, num_processes=1
     )
     export_counts = starter._create_export_counts(
-        event_repository, flow_repository, track_repository
+        event_repository, flow_repository, track_repository, get_sections_by_id, create_events
     )
+    clear_repositories = starter._creater_clear_repositories()
+    reset_project_config = starter._create_reset_project_config()
+    track_view_state: TrackViewState()
+    start_new_project = StartNewProject(clear_repositories= clear_repositories,reset_project_config= reset_project_config,track_view_state= track_view_state)
+    project_updater = ProjectUpdater()
+    load_track_files = LoadTrackFiles()
     return OTAnalyticsApplication(
         datastore=datastore,
         track_state=track_state,
@@ -172,28 +229,37 @@ def create_app(
         export_counts=export_counts,
         create_events=create_events,
         get_all_track_files=GetAllTrackFiles(track_file_repository),
-        load_otflow=LoadOtflow(),
+        load_otflow=load_otflow,
+        add_section=add_section,
+        add_flow=add_flow,
+        clear_all_events=clear_all_events,
+        start_new_project=start_new_project,
+        project_updater=project_updater,
+        load_track_files=load_track_files,
     )
 
 
 @pytest.fixture
 def app(
-    starter: ApplicationStarter,
-    track_repository: TrackRepository,
-    track_file_repository: TrackFileRepository,
-    section_repository: SectionRepository,
-    flow_repository: FlowRepository,
-    event_repository: EventRepository,
+        video_parser: VideoParser,
+        video_repository: VideoRepository,
+        track_repository: TrackRepository,
+        track_file_repository: TrackFileRepository,
+        track_to_video_repository: TrackToVideoRepository,
+        section_repository: SectionRepository,
+        flow_repository: FlowRepository,
+        event_repository: EventRepository,
 ) -> OTAnalyticsApplication:
     return create_app(
-        starter, track_repository, track_file_repository, section_repository, flow_repository, event_repository
+        video_parser, video_repository, track_repository, track_file_repository, track_to_video_repository,
+        section_repository, flow_repository, event_repository
     )
 
 
 @pytest.fixture
 def tracks_intersecting_sections(
-    starter: ApplicationStarter,
-    track_repository: TrackRepository,
+        starter: ApplicationStarter,
+        track_repository: TrackRepository,
 ) -> TracksIntersectingSections:
     get_all_tracks = GetAllTracks(track_repository)
     return starter._create_tracks_intersecting_sections(
@@ -216,7 +282,7 @@ def get_track_counts(tracks: Iterable[Track]) -> list[TrackCount]:
 
 
 def filter_detection_count_ge(
-    counts: list[TrackCount], thresh: int
+        counts: list[TrackCount], thresh: int
 ) -> list[TrackCount]:
     return [count for count in counts if count["det_count"] >= thresh]
 
@@ -226,26 +292,33 @@ class TestProfile:
         app.add_tracks_of_files([ottrk])
 
     def fill_section_repository(
-        self, app: OTAnalyticsApplication, otflow: Path
+            self, app: OTAnalyticsApplication, otflow: Path
     ) -> None:
         app.load_otflow(otflow)
 
-    def test_load_ottrks(
-        self,
-        benchmark: BenchmarkFixture,
-        app: OTAnalyticsApplication,
-        ottrk_file: Path,
+    def test_load_ottrks_with_python_parser(
+            self,
+            benchmark: BenchmarkFixture,
+            python_ottrk_parser: TrackParser,
+            ottrk_file: Path,
     ) -> None:
-        benchmark.pedantic(self.fill_track_repository, args=(app, ottrk_file))
+        benchmark.pedantic(python_ottrk_parser.parse, args=(ottrk_file,))
 
-    @pytest.mark.skip
+    def test_load_ottrks_with_panda_parser(
+            self,
+            benchmark: BenchmarkFixture,
+            panda_ottrk_parser: TrackParser,
+            ottrk_file: Path,
+    ) -> None:
+        benchmark.pedantic(panda_ottrk_parser.parse, args=(ottrk_file,))
+
     def test_create_events(
-        self,
-        benchmark: BenchmarkFixture,
-        create_events: CreateEvents,
-        app: OTAnalyticsApplication,
-        ottrk_file: Path,
-        otflow_file: Path,
+            self,
+            benchmark: BenchmarkFixture,
+            create_events: CreateEvents,
+            app: OTAnalyticsApplication,
+            ottrk_file: Path,
+            otflow_file: Path,
     ) -> None:
         def setup() -> None:
             app._clear_event_repository()
@@ -257,14 +330,13 @@ class TestProfile:
             create_events, setup=setup, rounds=5, iterations=1, warmup_rounds=1
         )
 
-    @pytest.mark.skip
     def test_tracks_intersecting_sections(
-        self,
-        benchmark: BenchmarkFixture,
-        tracks_intersecting_sections: TracksIntersectingSections,
-        app: OTAnalyticsApplication,
-        ottrk_file: Path,
-        otflow_file: Path,
+            self,
+            benchmark: BenchmarkFixture,
+            tracks_intersecting_sections: TracksIntersectingSections,
+            app: OTAnalyticsApplication,
+            ottrk_file: Path,
+            otflow_file: Path,
     ) -> None:
         self.fill_track_repository(app, ottrk_file)
         self.fill_section_repository(app, otflow_file)
