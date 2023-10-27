@@ -172,12 +172,13 @@ def create_app(
 def app(
     starter: ApplicationStarter,
     track_repository: TrackRepository,
+    track_file_repository: TrackFileRepository,
     section_repository: SectionRepository,
     flow_repository: FlowRepository,
     event_repository: EventRepository,
 ) -> OTAnalyticsApplication:
     return create_app(
-        starter, track_repository, section_repository, flow_repository, event_repository
+        starter, track_repository, track_file_repository, section_repository, flow_repository, event_repository
     )
 
 
