@@ -36,7 +36,7 @@ from OTAnalytics.plugin_parser.otvision_parser import SimpleVideoParser, OttrkPa
 from OTAnalytics.plugin_parser.pandas_parser import PandasDetectionParser
 from OTAnalytics.plugin_ui.main_application import ApplicationStarter
 
-
+NUM_PROCESSES = 1
 @pytest.fixture
 def ottrk_file(test_data_dir: Path) -> Path:
     return Path(test_data_dir / "OTCamera19_FR20_2023-05-24_00-30-00.ottrk")
@@ -131,7 +131,7 @@ def create_events(
         clear_events,
         get_tracks_without_single_detections,
         add_events,
-        num_processes=1
+        num_processes=NUM_PROCESSES
     )
 
 
