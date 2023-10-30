@@ -18,12 +18,15 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.11
-      - name: Check-out platomo-build repository
-        uses: actions/checkout@v3
+      - name: Download test data
+        run: gh release download release -R github.com/StevenSchlechte/testrepoyml/
         with:
-          repository: StevenSchlechte/testrepoyml
-          token: ${{ secrets.BENCHMARK_TOKEN }}
           path: tests/data
+      - name: unzip
+        run: | 
+          cd tests/data
+          unzip *.zip
+          cd ..
       - name: Run benchmark
         run: |
           python -m pip install --upgrade pip
