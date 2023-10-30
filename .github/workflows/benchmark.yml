@@ -27,7 +27,6 @@ jobs:
           ls -la
           cd tests/data
           ls -la
-          unzip *.zip
           cd ..
       - name: Run benchmark
         run: |
