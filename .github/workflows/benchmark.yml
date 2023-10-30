@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: 3.11
       - name: Download test data
-        run: gh release download release -R github.com/StevenSchlechte/testrepoyml/ -D tests/data
+        run: gh release download release -R StevenSchlechte/testrepoyml -D tests/data
         env:
           GH_TOKEN: ${{ github.token }}
       - name: unzip
