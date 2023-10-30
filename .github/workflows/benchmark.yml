@@ -24,6 +24,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - name: unzip
         run: | 
+          ls -la
           cd tests/data
           unzip *.zip
           cd ..
