@@ -25,7 +25,7 @@ jobs:
       - name: unzip
         run: | 
           cd tests/data
-          unzip *.zip
+          unzip OTCamera19_FR20_2023-05-24_00-00-00_05-45-00.1.zip
           rm *.zip
           ls -la
           cd ..
