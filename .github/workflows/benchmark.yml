@@ -1,8 +1,7 @@
-name: Python Example with pytest
+name: Benchmark Test With Pytest
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 0 * * *'
 
 permissions:
   contents: write
@@ -11,46 +10,38 @@ permissions:
 
 jobs:
   benchmark:
-    name: Run pytest-benchmark benchmark exampl
-    runs-on: ubuntu-latest
+    name: Run pytest-benchmark benchmark
+    runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: 3.11
       - name: Download test data
-        run: gh release download release -R StevenSchlechte/testrepoyml -D tests/data
+        run: gh release download release -R platomo/OpenTrafficCam-testdata -D tests/data
         env:
           GH_TOKEN: ${{ github.token }}
-      - name: unzip
-        run: | 
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unzip test data
+        run: |
           cd tests/data
           unzip \*.zip
           rm *.zip
-          ls -la
           cd ..
-      - name: Run benchmark
+      - name: Install requirements
         run: |
           python -m pip install --upgrade pip
-          if [ -f "requirements.txt" ]; then
-              pip install -r requirements.txt
-          fi
-          if [ -f "requirements-dev.txt" ]; then
-              pip install -r requirements-dev.txt
-          fi
-      - name: Run test
-        run : pytest ./tests/benchmark_otanalytics.py --benchmark-json output.json
+          pip install -r requirements-dev.txt
+      - name: Run benchmark tests
+        run: pytest ./tests/benchmark_otanalytics.py --benchmark-json output.json
       - name: Store benchmark result - separate results repo
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Python Benchmark with pytest-benchmark
           tool: 'pytest'
           output-file-path: output.json
-          # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096
-          github-token: ${{ secrets.BENCHMARK_TOKEN }}
           auto-push: true
-          # Show alert with commit comment on detecting possible performance regression
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           alert-threshold: '200%'
           comment-on-alert: true
           fail-on-alert: true
-          gh-repository: 'github.com/StevenSchlechte/StevenSchlechte.github.io'
