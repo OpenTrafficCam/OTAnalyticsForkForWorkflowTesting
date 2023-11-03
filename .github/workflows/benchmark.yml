@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: 3.11
       - name: Download test data
-        run: gh release download release -R platomo/OpenTrafficCam-testdata -D tests/data
+        run: gh release download release -R StevenSchlechte/testrepoyml -D tests/data
         env:
           GH_TOKEN: ${{ github.token }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
