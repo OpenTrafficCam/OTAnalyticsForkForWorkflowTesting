@@ -21,8 +21,6 @@ jobs:
           python-version: 3.11
       - name: Delete existing release
         run: gh auth login
-        env:
-          GH_TOKEN: ${{ github.token }}
       - name: Download test data
         run: gh release download release -R StevenSchlechte/testrepoyml -D tests/data
         env:
